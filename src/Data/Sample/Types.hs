@@ -31,6 +31,9 @@ class Sampleable d where
     -- returning a new 'RandomGen'.
     sampleFrom :: (RandomGen g) => d a -> g -> (a, g)
 
+-- | 'Sampleable' instance for 'Distribution'. We ensure
+-- that we always pass the *next* 'RandomGen' provided
+-- to sampleFrom. This allows us to obey the monad laws.
 instance Sampleable Distribution where
     sampleFrom da g
         = case da of
@@ -38,7 +41,7 @@ instance Sampleable Distribution where
                 -> let (a, g')   = randomR (0, 1.0) g
                        (a', g'') = randomR (0, 1.0) g'
                        s = (stdev * boxMuller a a') + mean
-                   in (s, g'')
+                   in (s, g')
             Bernoulli prob    
                 -> let (a, g') = randomR (0, 1.0) g
                    in (a <= prob, g')
@@ -52,7 +55,7 @@ instance Sampleable Distribution where
                              if lim <= snd x then fst x 
                              else scan (lim - snd x) xs
             Certain val       
-                -> (val, snd $ next g)
+                -> (val, snd $ randomR (0, 1.0 :: Double) g) -- Seemlingly unnecessary, but important to obey the monad laws to always producethe same RandomGen each time we sample.
     certainDist = Certain
 
 instance (Show a) => Show (Distribution a) where
@@ -68,12 +71,21 @@ newtype Sample g d a
     = Sample { runSample :: (RandomGen g, Sampleable d) => g -> d a }
 
 -- | Monte Carlo monad for recording sampled values along the way.
-newtype MonteCarlo g d a 
+newtype MonteCarloSample g d a
     = MonteCarlo 
-    { runMonteCarlo :: (RandomGen g, Sampleable d) => WriterT (S.Seq a) (Sample g d) a }
+    { runMonteCarloSample :: (Sampleable d, RandomGen g) => WriterT (S.Seq a) (Sample g d) a }
+
+-- | Specified type synonym for 'MonteCarloSample' for shorter
+-- type synonyms and actual usage.
+type MonteCarlo a = MonteCarloSample StdGen Distribution a
+
+-- | Convenience function for retrieving the path of values
+-- produced by sub-computations.
+-- execMonteCarlo :: MonteCarloSample g d a -> Sample g d (S.Seq a)
+-- execMonteCarlo = execWriterT . runMonteCarlo
 
 -- | Monad instance for Sample.
-instance (RandomGen g, Sampleable s) => Monad (Sample g s) where
+instance (RandomGen g, Sampleable d) => Monad (Sample g d) where
     return x = Sample $ \_ -> certainDist x
     ma >>= f = let func = runSample ma
                in Sample $

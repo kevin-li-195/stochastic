@@ -13,7 +13,7 @@ name:                stat-sampling
 version:             0.1.0.0
 
 -- A short (one-line) description of the package.
-synopsis:            Monadic sampling from arbitrary probability distributions.
+synopsis:            Monadic composition of probabilistic functions and sampling.
 
 -- A longer description of the package.
 -- description:         
@@ -78,4 +78,11 @@ test-suite shadyGambler
   hs-source-dirs:      test
   main-is:             Test.hs
   build-depends:       base, stat-sampling, containers
+  default-language:    Haskell2010
+
+test-suite monadLaws
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             MonadLaws.hs
+  build-depends:       base, stat-sampling, random
   default-language:    Haskell2010
