@@ -45,7 +45,7 @@ sample_ s g = fst $ sample s g
 
 -- | Get a certain number of samples from the 'Sample'
 sampleN :: (RandomGen g, Sampleable d) => Int -> Sample g d a -> g -> S.Seq a
-sampleN i s g = if i == 0 then S.empty
+sampleN i s g = if i <= 0 then S.empty
                 else let (a, g') = sample s g
                      in a S.<| sampleN (i - 1) s g'
 
