@@ -123,14 +123,3 @@ test-suite normal10
                        -threaded
                        -fprof-auto
                        "-with-rtsopts=-N -pa -s -h -i0.1"
-test-suite normal50
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Normal50.hs
-  build-depends:       base, stat-sampling, random
-  default-language:    Haskell2010
-  -- | Options to pass to ghc
-  ghc-options:         -O2
-                       -threaded
-                       -fprof-auto
-                       "-with-rtsopts=-N -pa -s -h -i0.1"
