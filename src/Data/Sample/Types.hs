@@ -55,9 +55,11 @@ instance Sampleable Distribution where
                              if lim <= snd x then fst x 
                              else scan (lim - snd x) xs
             Certain val       
-                -> (val, snd $ randomR (0, 1.0 :: Double) g) -- Seemlingly unnecessary, but important to obey the monad laws to always producethe same RandomGen each time we sample.
+                -> (val, snd $ randomR (0, 1.0 :: Double) g) 
+                -- Seemingly unnecessary, but important to obey the monad laws to always produce the same RandomGen each time we sample.
     certainDist = Certain
 
+-- | Show instance for 'Distribution's.
 instance (Show a) => Show (Distribution a) where
     show da = case da of
         Normal mean stdev -> "Normal dist: Mean = " ++ show mean ++ " StDev = " ++ show stdev
@@ -70,24 +72,15 @@ instance (Show a) => Show (Distribution a) where
 newtype Sample g d a
     = Sample { runSample :: (RandomGen g, Sampleable d) => g -> d a }
 
--- | Monte Carlo monad for recording sampled values along the way.
-newtype MonteCarloSample g d a
-    = MonteCarlo 
-    { runMonteCarloSample :: (Sampleable d, RandomGen g) => WriterT (S.Seq a) (Sample g d) a }
-
--- | Specified type synonym for 'MonteCarloSample' for shorter
--- type synonyms and actual usage.
-type MonteCarlo a = MonteCarloSample StdGen Distribution a
-
--- | Convenience function for retrieving the path of values
--- produced by sub-computations.
--- execMonteCarlo :: MonteCarloSample g d a -> Sample g d (S.Seq a)
--- execMonteCarlo = execWriterT . runMonteCarlo
+-- | Monad that allows us to record numeric values as we
+-- sample them.
+type MonteCarlo
+    = WriterT (S.Seq Double) (Sample StdGen Distribution) Double
 
 -- | Monad instance for Sample.
 instance (RandomGen g, Sampleable d) => Monad (Sample g d) where
     return x = Sample $ \_ -> certainDist x
-    ma >>= f = let func = runSample ma
+    (>>=) ma f = let func = runSample ma
                in Sample $
                    \g -> let (a, g') = sampleFrom (func g) g
                          in runSample (f a) g'
@@ -103,10 +96,6 @@ instance (RandomGen g, Sampleable s) => Applicative (Sample g s) where
 
 -- | Type synonym for shorter type annotations for 'Sample'.
 type Sampler a = Sample StdGen Distribution a
-
--- | Convenience function for running 'Sampler's.
-runSampler :: Sample StdGen Distribution a -> StdGen -> Distribution a
-runSampler = runSample
 
 -- | Type synonym for 'Double' so that the 
 -- type annotation for the 'Normal' constructor is more informative.
