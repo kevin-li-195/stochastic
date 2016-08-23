@@ -16,6 +16,6 @@ normal10 :: MonteCarlo
 normal10 = composeMC 10 normalInit f
 
 main = do
-    gen <- getStdGen
+    gen <- newStdGen
     print "normal10"
     print $ runMCN 100000 normal10 gen
