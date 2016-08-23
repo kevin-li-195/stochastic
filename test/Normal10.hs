@@ -5,15 +5,15 @@ import Data.Sample.Lib
 import System.Random
 
 normalInit :: StochProcess
-normalInit = normalMC 10 3
+normalInit = normalProcess 10 3
 
 f :: Double -> StochProcess
-f d = if d < 7 then normalMC (0.9 * d) (0.3 * d)
-  else if d > 13 then normalMC (1.1 * d) (0.3 * d)
-  else normalMC d (0.3 * d)
+f d = if d < 7 then normalProcess (0.9 * d) (0.3 * d)
+  else if d > 13 then normalProcess (1.1 * d) (0.3 * d)
+  else normalProcess d (0.3 * d)
 
 normal10 :: StochProcess
-normal10 = composeMC 10 normalInit f
+normal10 = composeProcess 10 normalInit f
 
 main = do
     gen <- newStdGen

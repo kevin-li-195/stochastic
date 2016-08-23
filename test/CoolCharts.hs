@@ -12,7 +12,7 @@ import Graphics.Rendering.Chart.Backend.Cairo
 import Graphics.Rendering.Chart.Easy
 
 normalInit :: StochProcess
-normalInit = normalMC 0 1
+normalInit = normalProcess 0 1
 
 drift :: Sampler Double
 drift = normal 0 1
@@ -20,15 +20,15 @@ drift = normal 0 1
 f :: Double -> StochProcess
 f samp = do
     dr <- lift drift
-    normalMC (dr + samp) 1
+    normalProcess (dr + samp) 1
 
 testChart :: S.Seq (S.Seq Double) -> EC (Layout Integer Double) ()
-testChart ss = mcToChart "Random Walk" ss
+testChart ss = processToChart "Random Walk" ss
 
 normal1 :: StochProcess
-normal1 = composeMC 10000 normalInit f
+normal1 = composeProcess 10000 normalInit f
 
 main = do
     gen <- newStdGen
-    let a = runMC_ normal1 gen
+    let a = runProcess_ normal1 gen
     toFile def "chart.png" $ testChart $ S.singleton a
