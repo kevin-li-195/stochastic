@@ -10,6 +10,8 @@ import Data.Sample.Lib
 
 import qualified Data.Sequence as S
 
+import Numeric.MathFunctions.Constants
+
 import System.Random
 
 -- | Datatype representing parameterized probability distributions
@@ -31,6 +33,13 @@ class Sampleable d where
     -- returning a new 'RandomGen'.
     sampleFrom :: (RandomGen g) => d a -> g -> (a, g)
 
+-- | Randoms that aren't too small.
+decentRandom :: (RandomGen g) => g -> (Double, g)
+decentRandom gen = let (sampled, newG) = randomR (0, 1.0 :: Double) gen
+                   in if sampled <= m_epsilon 
+                      then decentRandom newG
+                      else (sampled, newG)
+
 -- | 'Sampleable' instance for 'Distribution'. We ensure
 -- that we always pass the *next* 'RandomGen' provided
 -- to sampleFrom. This allows us to obey the monad laws.
@@ -38,9 +47,9 @@ instance Sampleable Distribution where
     sampleFrom da g
         = case da of
             Normal mean stdev 
-                -> let (a, g')   = randomR (0, 1.0) g
-                       (a', g'') = randomR (0, 1.0) g'
-                       s = (stdev * boxMuller a a') + mean
+                -> let (a, g')   = decentRandom g 
+                       (a', g'') = decentRandom g'
+                       s = (stdev * (boxMuller a a')) + mean
                    in (s, g')
             Bernoulli prob    
                 -> let (a, g') = randomR (0, 1.0) g
@@ -70,7 +79,7 @@ instance (Show a) => Show (Distribution a) where
 -- | 'Sample' monad containing a random number generator plus a type from which
 -- we can sample values of type a
 newtype Sample g d a
-    = Sample { runSample :: (RandomGen g, Sampleable d) => g -> d a }
+    = Sample { runSample :: (RandomGen g, Sampleable d) => g -> (d a, g) }
 
 -- | Monad that allows us to record numeric values as we
 -- sample them.
@@ -79,11 +88,12 @@ type MonteCarlo
 
 -- | Monad instance for Sample.
 instance (RandomGen g, Sampleable d) => Monad (Sample g d) where
-    return x = Sample $ \_ -> certainDist x
+    return x = Sample $ \g -> (certainDist x, snd $ next g)
     (>>=) ma f = let func = runSample ma
-               in Sample $
-                   \g -> let (a, g') = sampleFrom (func g) g
-                         in runSample (f a) g'
+                 in Sample $ \g -> 
+                       let (dist, g') = func g
+                           (a, g'') = sampleFrom dist g'
+                       in runSample (f a) g''
 
 -- | Trivial 'Functor' instance for 'Sample' 'StdGen' 'Distribution'.
 instance (RandomGen g, Sampleable s) => Functor (Sample g s) where

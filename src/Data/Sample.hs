@@ -25,6 +25,12 @@ sampleMC_ ma g = flip sample_ g $ liftM fst $ runWriterT ma
 sampleMC :: MonteCarlo -> StdGen -> (Double, StdGen)
 sampleMC ma g = flip sample g $ liftM fst $ runWriterT ma
 
+-- | Get a certain number of samples from the 'MonteCarlo' computation.
+sampleMCN :: (Integral i) => i -> MonteCarlo -> StdGen -> S.Seq Double
+sampleMCN i ma g = if i <= 0 then S.empty
+                   else let (a, gen) = sampleMC ma g
+                   in a S.<| sampleMCN (i-1) ma gen
+
 -- | Run a 'MonteCarlo' computation and retrieve the recorded
 -- results along with a new 'RandomGen'.
 runMC :: MonteCarlo -> StdGen -> (S.Seq Double, StdGen)
@@ -37,6 +43,7 @@ runMC_ ma g = fst $ runMC ma g
 
 -- | Runs a 'MonteCarlo' computation a given number times
 -- and produces a 'Sequence' of 'Sequence's of Doubles.
+-- | Get a certain number of samples from the 'Sample'
 runMCN :: (Integral i) => i -> MonteCarlo -> StdGen -> S.Seq (S.Seq Double)
 runMCN n mc gen = if n <= 0 then S.empty
                   else let (seq, gen') = runMC mc gen
@@ -46,7 +53,7 @@ runMCN n mc gen = if n <= 0 then S.empty
 -- the value sampled from the normal distribution.
 normalMC :: Mean -> StDev -> MonteCarlo 
 normalMC mean std = do
-    sample <- lift $ normal std mean
+    sample <- lift $ normal mean std
     tell $ S.singleton sample
     return sample
 
@@ -69,12 +76,12 @@ discreteMC a = do
 -- | Function to make a 'Sample' out of a provided
 -- 'Distribution'.
 mkSample :: (RandomGen g, Sampleable d) => d a -> Sample g d a
-mkSample d = Sample $ \_ -> d
+mkSample d = Sample $ \g -> (d, snd $ next g)
 
 -- | 'Sample' for a normal distribution with given
 -- 'StdGen', 'Mean', and 'StDev'.
 normal :: RandomGen g => Mean -> StDev -> Sample g Distribution Double
-normal m s = mkSample $ Normal m s
+normal m s = mkSample $ Normal m $ abs s
 
 -- | 'Sample' for a Bernoulli distribution with given
 -- probability to produce True.
@@ -97,7 +104,9 @@ certain = mkSample . certainDist
 -- | Get one sample of type a from the 'Sample' along with
 -- a new 'StdGen'
 sample :: (RandomGen g, Sampleable d) => Sample g d a -> g -> (a, g)
-sample s g = sampleFrom (runSample s g) g
+sample s g = let (dist, g') = runSample s g
+                 (a, g'') = sampleFrom dist g'
+             in (a, snd $ next g'')
 
 -- | Get one sample of type a from the 'Sample',
 -- discarding the 'RandomGen'
