@@ -16,9 +16,9 @@ seqLines :: String -> S.Seq (S.Seq Double) -> EC l (PlotLines Integer Double)
 seqLines t ss = line t $ toList $ fmap (\x -> zip [1..] $ toList x) ss
 
 -- | Easy function to make a 
-mcToChart :: String  -- | Title of the plot.
-          -> S.Seq (S.Seq Double)  -- | Lines to plot.
+processToChart :: String  -- ^ Title of the plot.
+          -> S.Seq (S.Seq Double)  -- ^ Lines to plot.
           -> EC (Layout Integer Double) ()
-mcToChart t ss = do
+processToChart t ss = do
     layout_title .= t
     plot $ seqLines t ss

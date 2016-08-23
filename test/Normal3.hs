@@ -18,4 +18,4 @@ normal3 = composeMC 3 normalInit f
 main = do
     gen <- newStdGen
     print "normal3"
-    print $ runMCN 100000 normal3 gen
+    print $ runProcessN 100000 normal3 gen

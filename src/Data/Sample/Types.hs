@@ -1,6 +1,24 @@
 {-#LANGUAGE GADTs#-}
 {-#LANGUAGE RankNTypes#-}
 {-#LANGUAGE FlexibleInstances#-}
+
+{-|
+ Module         : Data.Sample.Types
+ Description    : Types used for Sample.
+ License        : GPL-3
+ Maintainer     : hackage@mail.kevinl.io
+ Stability      : experimental
+
+ This module contains the types
+ for the stat-sampling package.
+
+ WARNING: In its current state, care should be
+ taken when using discrete distributions
+ as it is never checked that the probabilities
+ sum to 1. As is, execution of sampling may fail at run-time
+ if probabilities aren't normalized.
+-}
+
 module Data.Sample.Types where
 
 import Control.Monad
@@ -9,8 +27,6 @@ import Control.Monad.Writer
 import Data.Sample.Lib
 
 import qualified Data.Sequence as S
-
-import Numeric.MathFunctions.Constants
 
 import System.Random
 
@@ -33,13 +49,6 @@ class Sampleable d where
     -- returning a new 'RandomGen'.
     sampleFrom :: (RandomGen g) => d a -> g -> (a, g)
 
--- | Randoms that aren't too small.
-decentRandom :: (RandomGen g) => g -> (Double, g)
-decentRandom gen = let (sampled, newG) = randomR (0, 1.0 :: Double) gen
-                   in if sampled <= m_epsilon 
-                      then decentRandom newG
-                      else (sampled, newG)
-
 -- | 'Sampleable' instance for 'Distribution'. We ensure
 -- that we always pass the *next* 'RandomGen' provided
 -- to sampleFrom. This allows us to obey the monad laws.
@@ -52,10 +61,10 @@ instance Sampleable Distribution where
                        s = (stdev * (boxMuller a a')) + mean
                    in (s, g')
             Bernoulli prob    
-                -> let (a, g') = randomR (0, 1.0) g
+                -> let (a, g') = decentRandom g
                    in (a <= prob, g')
             Discrete l        
-                -> let (a, g') = randomR (0, 1.0) g
+                -> let (a, g') = decentRandom g
                    in (scan a l, g')
                    where scan lim [] = 
                              if lim <= 0 then error $ "not normalized discrete dist"
@@ -64,7 +73,7 @@ instance Sampleable Distribution where
                              if lim <= snd x then fst x 
                              else scan (lim - snd x) xs
             Certain val       
-                -> (val, snd $ randomR (0, 1.0 :: Double) g) 
+                -> (val, snd $ decentRandom g) 
                 -- Seemingly unnecessary, but important to obey the monad laws to always produce the same RandomGen each time we sample.
     certainDist = Certain
 

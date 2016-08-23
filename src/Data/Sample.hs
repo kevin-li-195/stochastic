@@ -11,64 +11,64 @@ import System.Random
 -- | Function to construct a 'StochProcess' computation
 -- given an initial computation, a 'StochProcess' function,
 -- and number of times to apply the function with bind.
-composeMC :: Integral i => i -> StochProcess -> (Double -> StochProcess) -> StochProcess
-composeMC i mc f = if i <= 0 then mc 
-                   else (composeMC (i-1) mc f) >>= f
+composeProcess :: Integral i => i -> StochProcess -> (Double -> StochProcess) -> StochProcess
+composeProcess i pr f = if i <= 0 then pr 
+                   else (composeProcess (i-1) pr f) >>= f
 
 -- | Sample from the 'StochProcess' computation, discarding
 -- the new 'RandomGen'.
-sampleMC_ :: StochProcess -> StdGen -> Double
-sampleMC_ ma g = flip sample_ g $ liftM fst $ runWriterT ma
+sampleProcess_ :: StochProcess -> StdGen -> Double
+sampleProcess_ ma g = flip sample_ g $ liftM fst $ runWriterT ma
 
 -- | Sample from the 'StochProcess' computation, returning
 -- the value of type a and a new 'RandomGen'.
-sampleMC :: StochProcess -> StdGen -> (Double, StdGen)
-sampleMC ma g = flip sample g $ liftM fst $ runWriterT ma
+sampleProcess :: StochProcess -> StdGen -> (Double, StdGen)
+sampleProcess ma g = flip sample g $ liftM fst $ runWriterT ma
 
 -- | Get a certain number of samples from the 'StochProcess' computation.
-sampleMCN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq Double
-sampleMCN i ma g = if i <= 0 then S.empty
-                   else let (a, gen) = sampleMC ma g
-                   in a S.<| sampleMCN (i-1) ma gen
+sampleProcessN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq Double
+sampleProcessN i ma g = if i <= 0 then S.empty
+                   else let (a, gen) = sampleProcess ma g
+                   in a S.<| sampleProcessN (i-1) ma gen
 
 -- | Run a 'StochProcess' computation and retrieve the recorded
 -- results along with a new 'RandomGen'.
-runMC :: StochProcess -> StdGen -> (S.Seq Double, StdGen)
-runMC ma g = flip sample g $ execWriterT ma
+runProcess :: StochProcess -> StdGen -> (S.Seq Double, StdGen)
+runProcess ma g = flip sample g $ execWriterT ma
 
 -- | Run a 'StochProcess' computation and retrieve the recorded
 -- results, discarding the new 'RandomGen'.
-runMC_ :: StochProcess -> StdGen -> S.Seq Double
-runMC_ ma g = fst $ runMC ma g
+runProcess_ :: StochProcess -> StdGen -> S.Seq Double
+runProcess_ ma g = fst $ runProcess ma g
 
 -- | Runs a 'StochProcess' computation a given number times
 -- and produces a 'Sequence' of 'Sequence's of Doubles.
 -- | Get a certain number of samples from the 'Sample'
-runMCN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq (S.Seq Double)
-runMCN n mc gen = if n <= 0 then S.empty
-                  else let (seq, gen') = runMC mc gen
-                       in seq S.<| runMCN (n-1) mc gen'
+runProcessN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq (S.Seq Double)
+runProcessN n pr gen = if n <= 0 then S.empty
+                  else let (seq, gen') = runProcess pr gen
+                       in seq S.<| runProcessN (n-1) pr gen'
 
 -- | 'StochProcess' sample for a normal distribution that records
 -- the value sampled from the normal distribution.
-normalMC :: Mean -> StDev -> StochProcess 
-normalMC mean std = do
+normalProcess :: Mean -> StDev -> StochProcess 
+normalProcess mean std = do
     sample <- lift $ normal mean std
     tell $ S.singleton sample
     return sample
 
 -- | 'StochProcess' sample for a distribution over 'Num's that always
 -- returns the same value when sampled, and records that value.
-certainMC :: Double -> StochProcess 
-certainMC a = do
+certainProcess :: Double -> StochProcess 
+certainProcess a = do
     sample <- lift $ certain a
     tell $ S.singleton sample
     return sample
 
 -- | 'StochProcess' sample for a discrete distribution over 'Num's
 -- that records the value sampled from the normal distribution.
-discreteMC :: [(Double, Double)] -> StochProcess 
-discreteMC a = do
+discreteProcess :: [(Double, Double)] -> StochProcess 
+discreteProcess a = do
     sample <- lift $ discrete a
     tell $ S.singleton sample
     return sample
@@ -120,20 +120,20 @@ sampleN i s g = if i <= 0 then S.empty
                      in a S.<| sampleN (i - 1) s g'
 
 -- | Sample from a 'Sample' of type a using the global
--- random number generator provided by 'getStdGen',
+-- random number generator provided by 'newStdGen',
 -- returning a new 'StdGen' with the sampled value.
 sampleIO :: Sampleable d => Sample StdGen d a -> IO (a, StdGen)
-sampleIO s = sample s <$> getStdGen
+sampleIO s = sample s <$> newStdGen
 
 -- | Sample from a 'Sample' of type a using the global
--- random number generator provided by 'getStdGen',
+-- random number generator provided by 'newStdGen',
 -- discarding the new 'StdGen'.
 sampleIO_ :: Sampleable d => Sample StdGen d a -> IO a
-sampleIO_ s = fst <$> (sample s <$> getStdGen)
+sampleIO_ s = fst <$> (sample s <$> newStdGen)
 
 -- | Produce several samples from the 'Sample' using the random number generator
 -- in the IO monad.
 sampleION :: (Sampleable d, Integral i) => i -> Sample StdGen d a -> IO (S.Seq a)
-sampleION i s = sampleN i s <$> getStdGen
+sampleION i s = sampleN i s <$> newStdGen
 
 -- | TODO: Concurrent sampling in the IO monad, with 'RandomGen' splitting.
