@@ -137,14 +137,12 @@ test-suite chart
   -- | Options to pass to ghc
   ghc-options:         -O2
                        -threaded
-
-test-suite smallNums
+test-suite coolCharts
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  main-is:             SmallNumbers.hs
-  build-depends:       base, math-functions, mtl
+  main-is:             CoolCharts.hs
+  build-depends:       base, stat-sampling, random, Chart-cairo, Chart, containers, mtl
   default-language:    Haskell2010
   -- | Options to pass to ghc
   ghc-options:         -O2
                        -threaded
-

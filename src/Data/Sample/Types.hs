@@ -81,9 +81,9 @@ instance (Show a) => Show (Distribution a) where
 newtype Sample g d a
     = Sample { runSample :: (RandomGen g, Sampleable d) => g -> (d a, g) }
 
--- | Monad that allows us to record numeric values as we
--- sample them.
-type MonteCarlo
+-- | Monad that represents a stochastic process.
+-- It allows us to record numeric values as we sample.
+type StochProcess
     = WriterT (S.Seq Double) (Sample StdGen Distribution) Double
 
 -- | Monad instance for Sample.

@@ -13,16 +13,16 @@ import System.Random
 import Graphics.Rendering.Chart.Backend.Cairo
 import Graphics.Rendering.Chart.Easy
 
-normalInit :: MonteCarlo
+normalInit :: StochProcess
 normalInit = normalMC 0 1
 
 skew :: Sampler Double
 skew = normal 0 1
 
-skewMC :: MonteCarlo
+skewMC :: StochProcess
 skewMC = normalMC 0 1
 
-f :: Double -> MonteCarlo
+f :: Double -> StochProcess
 f d = do
     sk <- lift skew
     normalMC (d + sk) 1
@@ -30,7 +30,7 @@ f d = do
 testChart :: S.Seq (S.Seq Double) -> EC (Layout Integer Double) ()
 testChart ss = mcToChart "Test Monte Carlo Chart" ss
 
-normal1 :: MonteCarlo
+normal1 :: StochProcess
 normal1 = composeMC 10000 normalInit f
 
 mean :: S.Seq Double -> Double
