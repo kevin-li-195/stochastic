@@ -8,16 +8,13 @@ and construction of stochastic processes.
 
 Resulting computations can then be run to generate data.
 
-BLog [post](http://kevinl.io/posts/2016-08-17-sampling-monad.html) has some along with examples.
-(work in progress).
+Blog [post](http://kevinl.io/posts/2016-08-17-sampling-monad.html) has some along with examples.
 
 TODO
 -----
-[ ] Improve performance
-[ ] Upload charts with profiled tests and memory usage.
-[ ] Finish README
-[ ] Finish blog post
-[x] ~~Implement Monte Carlo monad~~ (just used type synonym with WriterT)
-[ ] Generate documentation
-[ ] Implement learning for generative models
-[ ] Extend StochProcess to allow for ARCH models
+- See where performance can be improved.
+- Check if compiling with -O2 really gives a performance improvement.
+- Upload charts with profiled tests and memory usage.
+- Add more usage information to README.
+- Implement learning for generative models.
+- Extend StochProcess to allow for ARCH models.
