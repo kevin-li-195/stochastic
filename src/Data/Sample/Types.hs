@@ -38,6 +38,7 @@ data Distribution a where
     Normal :: Mean -> StDev -> Distribution Double
     Bernoulli :: Double -> Distribution Bool
     Discrete :: [(a, Double)] -> Distribution a
+    Uniform :: [a] -> Distribution a
     Certain :: a -> Distribution a
 
 -- | Class of types from which samples can be obtained.
@@ -51,7 +52,7 @@ class Sampleable d where
 
 -- | 'Sampleable' instance for 'Distribution'. We ensure
 -- that we always pass the *next* 'RandomGen' provided
--- to sampleFrom. This allows us to obey the monad laws.
+-- to sampleFrom. This lets us obey the monad laws.
 instance Sampleable Distribution where
     sampleFrom da g
         = case da of
@@ -72,6 +73,10 @@ instance Sampleable Distribution where
                          scan lim (x:xs) = 
                              if lim <= snd x then fst x 
                              else scan (lim - snd x) xs
+            Uniform l
+                -> let (a, g') = decentRandom g
+                       prob = 1 / (fromIntegral $ length l)
+                   in (l !! (floor $ a / prob), g')
             Certain val       
                 -> (val, snd $ decentRandom g) 
                 -- Seemingly unnecessary, but important to obey the monad laws to always produce the same RandomGen each time we sample.
@@ -80,10 +85,11 @@ instance Sampleable Distribution where
 -- | Show instance for 'Distribution's.
 instance (Show a) => Show (Distribution a) where
     show da = case da of
-        Normal mean stdev -> "Normal dist: Mean = " ++ show mean ++ " StDev = " ++ show stdev
-        Bernoulli prob -> "Bernoulli dist: Prob = " ++ show prob
-        Discrete l -> "Discrete dist: List is = " ++ show l
-        Certain val -> "Certain dist: val is: " ++ show val
+        Normal mean stdev -> "Normal " ++ show mean ++ " " ++ show stdev
+        Bernoulli prob -> "Bernoulli " ++ show prob
+        Discrete l -> "Discrete " ++ show l
+        Uniform l -> "Uniform " ++ show l       
+        Certain val -> "Certain " ++ show val
 
 -- | 'Sample' monad containing a random number generator plus a type from which
 -- we can sample values of type a
@@ -98,11 +104,10 @@ type StochProcess
 -- | Monad instance for Sample.
 instance (RandomGen g, Sampleable d) => Monad (Sample g d) where
     return x = Sample $ \g -> (certainDist x, snd $ next g)
-    (>>=) ma f = let func = runSample ma
-                 in Sample $ \g -> 
-                       let (dist, g') = func g
-                           (a, g'') = sampleFrom dist g'
-                       in runSample (f a) g''
+    (>>=) ma f = Sample $ \g -> 
+                     let (dist, g') = runSample ma g
+                         (a, g'') = sampleFrom dist g'
+                     in runSample (f a) g''
 
 -- | Trivial 'Functor' instance for 'Sample' 'StdGen' 'Distribution'.
 instance (RandomGen g, Sampleable s) => Functor (Sample g s) where

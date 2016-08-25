@@ -1,3 +1,21 @@
+{-|
+ Module         : Data.Sample
+ Description    : Types used for Sample.
+ License        : GPL-3
+ Maintainer     : hackage@mail.kevinl.io
+ Stability      : experimental
+
+ This module contains convenience functions to
+ construct 'Sample's or 'StochProcess'es corresponding
+ to several probability distributions.
+
+ It also contains functions that can be used for
+ running the constructed 'StochProcess'es and generating
+ datapoints, or sampling from a constructed 'Sample'.
+
+ Some examples for usage can be found here: <http://kevinl.io/posts/2016-08-17-sampling-monad.html>
+-}
+
 module Data.Sample where
 
 import Control.Monad.Trans
@@ -57,7 +75,7 @@ normalProcess mean std = do
     tell $ S.singleton sample
     return sample
 
--- | 'StochProcess' sample for a distribution over 'Num's that always
+-- | 'StochProcess' sample for a distribution over 'Double's that always
 -- returns the same value when sampled, and records that value.
 certainProcess :: Double -> StochProcess 
 certainProcess a = do
@@ -65,11 +83,19 @@ certainProcess a = do
     tell $ S.singleton sample
     return sample
 
--- | 'StochProcess' sample for a discrete distribution over 'Num's
+-- | 'StochProcess' sample for a discrete distribution over 'Double's
 -- that records the value sampled from the normal distribution.
 discreteProcess :: [(Double, Double)] -> StochProcess 
 discreteProcess a = do
     sample <- lift $ discrete a
+    tell $ S.singleton sample
+    return sample
+
+-- | 'StochProcess' sample for a uniform distribution over 'Double's
+-- that records the value sampled from it.
+uniformProcess :: [Double] -> StochProcess
+uniformProcess l = do
+    sample <- lift $ uniform l
     tell $ S.singleton sample
     return sample
 
@@ -96,13 +122,22 @@ discrete :: RandomGen g => [(a, Double)] -> Sample g Distribution a
 discrete [] = error "do not construct empty discrete distributions"
 discrete l = mkSample $ Discrete l
 
+-- | 'Sample' for a uniform distribution
+-- given a list of provided values.
+uniform :: (RandomGen g) => [a] -> Sample g Distribution a
+uniform l = mkSample $ Uniform l
+
 -- | 'Sample' for a distribution where we always sample
 -- the same value.
 certain :: (RandomGen g, Sampleable d) => a -> Sample g d a
 certain = mkSample . certainDist
 
 -- | Get one sample of type a from the 'Sample' along with
--- a new 'StdGen'
+-- a new 'StdGen'.
+--
+-- We do an extra 'next' in order to get one more
+-- 'RandomGen' because when we sample from normal
+-- distributions, we consume one extra 'RandomGen'.
 sample :: (RandomGen g, Sampleable d) => Sample g d a -> g -> (a, g)
 sample s g = let (dist, g') = runSample s g
                  (a, g'') = sampleFrom dist g'
