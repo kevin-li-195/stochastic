@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.
-name:                stat-sampling
+name:                stochastic
 
 -- The package version.  See the Haskell package versioning policy (PVP) 
 -- for standards guiding when and how versions should be incremented.
@@ -16,7 +16,15 @@ version:             0.1.0.0
 synopsis:            Monadic composition of probabilistic functions and sampling.
 
 -- A longer description of the package.
--- description:         
+description:         This package allows the user to perform monadic composition of
+                     probabilistic functions (i.e. functions that take values 
+                     and return distributions over values). These functions
+                     can then be sampled from to generate datapoints.
+
+                     Furthermore, the sampling monad is extended with a Writer 
+                     monad to allow the construction of stochastic processes,
+                     along with the ability to run the constructed processes
+                     and produce data.
 
 -- URL for the project homepage or repository.
 homepage:            http://kevinl.io/posts/2016-08-17-sampling-monad.html
@@ -52,7 +60,7 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Sample
-                       Data.Sample.Chart
+                       -- Data.Sample.Chart
                        Data.Sample.Types
                        Data.Sample.Lib
   
@@ -79,8 +87,11 @@ library
 
   -- | Options to pass to ghc
   ghc-options:         -O2
-                       -fprof-auto
-  
+
+source-repository head
+  type:     git
+  location: git://github.com/kevin-li-195/stochastic.git
+
 test-suite shadyGambler
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
@@ -90,7 +101,6 @@ test-suite shadyGambler
   -- | Options to pass to ghc
 --  ghc-options:         -O2
 --                       -threaded
---                       -fprof-auto
 --                       "-with-rtsopts=-N -p -s -h -i0.1"
 
 test-suite monadLaws
@@ -102,7 +112,6 @@ test-suite monadLaws
   -- | Options to pass to ghc
 --   ghc-options:         -O2
 --                        -threaded
---                        -fprof-auto
 --                        "-with-rtsopts=-N -pa-s -h -i0.1"
 
 test-suite normal3
@@ -114,7 +123,6 @@ test-suite normal3
   -- | Options to pass to ghc
   ghc-options:         -O2
                        -threaded
-                       -fprof-auto
                        "-with-rtsopts=-N -pa -s -h -i0.1"
 test-suite normal10
   type:                exitcode-stdio-1.0
@@ -125,7 +133,6 @@ test-suite normal10
   -- | Options to pass to ghc
   ghc-options:         -O2
                        -threaded
-                       -fprof-auto
                        "-with-rtsopts=-N -pa -s -h -i0.1"
 
 test-suite chart

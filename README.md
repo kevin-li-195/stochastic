@@ -1,5 +1,7 @@
-stat-sampling
+stochastic
 =====
+
+Version 0.1.0
 
 Haskell library for monadic composition of probabilistic functions 
 and construction of stochastic processes.

@@ -27,7 +27,7 @@ import Graphics.Rendering.Chart.Backend.Cairo
 seqLines :: String -> S.Seq (S.Seq Double) -> EC l (PlotLines Integer Double)
 seqLines t ss = line t $ toList $ fmap (\x -> zip [1..] $ toList x) ss
 
--- | Easy function to make a 
+-- | Easy function to make a plot. Really awful, don't use this.
 processToChart :: String  -- ^ Title of the plot.
           -> S.Seq (S.Seq Double)  -- ^ Lines to plot.
           -> EC (Layout Integer Double) ()
@@ -35,11 +35,10 @@ processToChart t ss = do
     layout_title .= t
     plot $ seqLines t ss
 
+-- | Convenience function to make a histogram.
 histogram :: String -> [Double] -> Layout Double Double
 histogram title values = layout
     where hist = plot_hist_values  .~ values
-                 -- $ plot_hist_range .~ Just (0, 10)
-                 -- $ plot_hist_bins  .~ 10
                  $ plot_hist_drop_lines .~ True
                  $ defaultFloatPlotHist
           layout :: Layout Double Double
