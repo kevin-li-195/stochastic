@@ -16,12 +16,47 @@
  Some examples for usage can be found here: <http://kevinl.io/posts/2016-08-17-sampling-monad.html>
 -}
 
-module Data.Stochastic where
+module Data.Stochastic (
+  -- * Constructing a Sample
+  certain
+, uniform
+, discrete
+, bernoulli
+, normal
+  -- * Sampling from a Sample
+, sample
+, sample_
+, sampleN
+, sampleIO
+, sampleIO_
+, sampleION
+  -- * Constructing a StochProcess
+, certainProcess
+, uniformProcess
+, discreteProcess
+, normalProcess
+  -- * Running a StochProcess
+, runProcess
+, runProcess_
+, runProcessN
+  -- * Sampling from a StochProcess
+, sampleProcess
+, sampleProcess_
+, sampleProcessN
+, sampleProcessIO
+, sampleProcessION
+  -- * The types
+, module Data.Stochastic.Types
+  -- * Internal functions for your viewing pleasure
+, module Data.Stochastic.Internal
+) where
 
 import Control.Monad.Trans
 import Control.Monad.Writer
 
+import Data.Stochastic.Internal
 import Data.Stochastic.Types
+
 import qualified Data.Sequence as S
 
 import System.Random
@@ -42,6 +77,26 @@ sampleProcess_ ma g = flip sample_ g $ liftM fst $ runWriterT ma
 -- the value of type a and a new 'RandomGen'.
 sampleProcess :: StochProcess -> StdGen -> (Double, StdGen)
 sampleProcess ma g = flip sample g $ liftM fst $ runWriterT ma
+
+-- | Sample from the 'StochProcess' computation
+-- in the IO monad, returning a 'Double'
+-- and a 'RandomGen' created in the IO monad.
+sampleProcessIO :: StochProcess -> IO (Double, StdGen)
+sampleProcessIO ma = do
+    gen <- newStdGen
+    return $ sampleProcess ma gen
+
+-- | Sample from the 'StochProcess' computation
+-- in the IO monad, returning a 'Double'
+-- and discarding the 'RandomGen'.
+sampleProcessIO_ :: StochProcess -> IO Double
+sampleProcessIO_ ma = fst <$> sampleProcessIO ma
+
+-- | Get a certain number of samples from the 'StochProcess' computation in the IO monad.
+sampleProcessION :: (Integral i) => i -> StochProcess -> IO (S.Seq Double)
+sampleProcessION i ma = do
+    gen <- newStdGen
+    return $ sampleProcessN i ma gen
 
 -- | Get a certain number of samples from the 'StochProcess' computation.
 sampleProcessN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq Double
@@ -97,11 +152,6 @@ uniformProcess l = do
     sample <- lift $ uniform l
     tell $ S.singleton sample
     return sample
-
--- | Function to make a 'Sample' out of a provided
--- 'Distribution'.
-mkSample :: (RandomGen g, Sampleable d) => d a -> Sample g d a
-mkSample d = Sample $ \g -> (d, snd $ next g)
 
 -- | 'Sample' for a normal distribution with given
 -- 'StdGen', 'Mean', and 'StDev'.
@@ -170,4 +220,7 @@ sampleIO_ s = fst <$> (sample s <$> newStdGen)
 sampleION :: (Sampleable d, Integral i) => i -> Sample StdGen d a -> IO (S.Seq a)
 sampleION i s = sampleN i s <$> newStdGen
 
--- | TODO: Concurrent sampling in the IO monad, with 'RandomGen' splitting.
+-- | Function to make a 'Sample' out of a provided
+-- 'Distribution'.
+mkSample :: (RandomGen g, Sampleable d) => d a -> Sample g d a
+mkSample d = Sample $ \g -> (d, snd $ next g)

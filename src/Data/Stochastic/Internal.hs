@@ -6,7 +6,10 @@
  Stability      : experimental
 
 -}
-module Data.Stochastic.Internal where
+module Data.Stochastic.Internal (
+  boxMuller
+, decentRandom
+) where
 
 import System.Random
 

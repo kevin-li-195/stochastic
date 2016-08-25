@@ -19,7 +19,15 @@
  if probabilities aren't normalized.
 -}
 
-module Data.Stochastic.Types where
+module Data.Stochastic.Types (
+  Distribution (..)
+, Sampleable (..)
+, Sample (..)
+, StochProcess (..)
+, Sampler (..)
+, Mean (..)
+, StDev (..)
+) where
 
 import Control.Monad
 import Control.Monad.Writer
