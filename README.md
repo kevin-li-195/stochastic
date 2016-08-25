@@ -18,3 +18,4 @@ TODO
 - Add more usage information to README.
 - Implement learning for generative models.
 - Extend StochProcess to allow for ARCH models.
+- Separate StochProcess and Sample modules.
