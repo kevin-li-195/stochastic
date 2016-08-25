@@ -57,7 +57,7 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:     Data.Sample
-                       Data.Sample.Chart
+                       -- Data.Sample.Chart
                        Data.Sample.Types
                        Data.Sample.Lib
   
@@ -69,8 +69,8 @@ library
   
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.9 && <4.10,
-                       Chart >=1.8 && <1.9,
-                       Chart-cairo >=1.8 && <1.9,
+                       -- Chart >=1.8 && <1.9,
+                       -- Chart-cairo >=1.8 && <1.9,
                        containers >= 0.5 && <0.6,
                        random >=1.1 && <2,
                        math-functions >=0.2 && <0.3,
