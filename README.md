@@ -19,3 +19,7 @@ TODO
 - Implement learning for generative models.
 - Extend StochProcess to allow for ARCH models.
 - Separate StochProcess and Sample modules.
+- See if building on top of mwc-random is better than
+carrying around StdGens.
+- Reduce composed probability distributions that have closed-form
+solutions before sampling.
