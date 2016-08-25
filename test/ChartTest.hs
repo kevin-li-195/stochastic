@@ -2,10 +2,10 @@
 
 import Control.Monad.Trans
 
-import Data.Sample
-import Data.Sample.Types
-import Data.Sample.Lib
-import Data.Sample.Chart
+import Data.Stochastic
+import Data.Stochastic.Types
+import Data.Stochastic.Internal
+import Data.Stochastic.Chart
 
 import qualified Data.Sequence as S
 

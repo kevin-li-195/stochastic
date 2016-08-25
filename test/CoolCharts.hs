@@ -1,9 +1,9 @@
 import Control.Monad.Trans
 
-import Data.Sample
-import Data.Sample.Types
-import Data.Sample.Lib
-import Data.Sample.Chart
+import Data.Stochastic
+import Data.Stochastic.Types
+import Data.Stochastic.Internal
+import Data.Stochastic.Chart
 
 import qualified Data.Sequence as S
 
@@ -30,5 +30,5 @@ normal1 = composeProcess 10000 normalInit f
 
 main = do
     gen <- newStdGen
-    let a = runProcess_ normal1 gen
-    toFile def "chart.png" $ testChart $ S.singleton a
+    let a = runProcessN 10 normal1 gen
+    toFile def "chart.png" $ testChart $ a

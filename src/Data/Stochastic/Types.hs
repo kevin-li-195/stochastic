@@ -30,6 +30,7 @@ module Data.Stochastic.Types (
 ) where
 
 import Control.Monad
+import Control.Monad.State
 import Control.Monad.Writer
 
 import Data.Stochastic.Internal
@@ -102,7 +103,7 @@ instance (Show a) => Show (Distribution a) where
 -- | 'Sample' monad containing a random number generator plus a type from which
 -- we can sample values of type a
 newtype Sample g d a
-    = Sample { runSample :: (RandomGen g, Sampleable d) => g -> (d a, g) }
+    = Sample { runSample :: (RandomGen g, Sampleable d) => State g (d a) }
 
 -- | Monad that represents a stochastic process.
 -- It allows us to record numeric values as we sample.
@@ -111,11 +112,16 @@ type StochProcess
 
 -- | Monad instance for Sample.
 instance (RandomGen g, Sampleable d) => Monad (Sample g d) where
-    return x = Sample $ \g -> (certainDist x, snd $ next g)
-    (>>=) ma f = Sample $ \g -> 
-                     let (dist, g') = runSample ma g
-                         (a, g'') = sampleFrom dist g'
-                     in runSample (f a) g''
+    return x = Sample $ do
+                modify (snd . next)
+                return $ certainDist x
+
+    (>>=) ma f = Sample $ do
+                     modify (snd . next)
+                     dist <- runSample ma
+                     g <- get
+                     let a = fst $ sampleFrom dist g
+                     runSample (f a)
 
 -- | Trivial 'Functor' instance for 'Sample' 'StdGen' 'Distribution'.
 instance (RandomGen g, Sampleable s) => Functor (Sample g s) where

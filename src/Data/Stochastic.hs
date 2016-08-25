@@ -35,6 +35,7 @@ module Data.Stochastic (
 , uniformProcess
 , discreteProcess
 , normalProcess
+, composeProcess
   -- * Running a StochProcess
 , runProcess
 , runProcess_
@@ -51,6 +52,7 @@ module Data.Stochastic (
 , module Data.Stochastic.Internal
 ) where
 
+import Control.Monad.State
 import Control.Monad.Trans
 import Control.Monad.Writer
 
@@ -188,7 +190,7 @@ certain = mkSample . certainDist
 -- 'RandomGen' because when we sample from normal
 -- distributions, we consume one extra 'RandomGen'.
 sample :: (RandomGen g, Sampleable d) => Sample g d a -> g -> (a, g)
-sample s g = let (dist, g') = runSample s g
+sample s g = let (dist, g') = runState (runSample s) g
                  (a, g'') = sampleFrom dist g'
              in (a, snd $ next g'')
 
@@ -223,4 +225,7 @@ sampleION i s = sampleN i s <$> newStdGen
 -- | Function to make a 'Sample' out of a provided
 -- 'Distribution'.
 mkSample :: (RandomGen g, Sampleable d) => d a -> Sample g d a
-mkSample d = Sample $ \g -> (d, snd $ next g)
+mkSample d = Sample $ do
+                g <- get
+                put $ snd $ next g
+                return d

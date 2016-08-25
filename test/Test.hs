@@ -1,8 +1,8 @@
 module Main where
 
-import Data.Sample
-import Data.Sample.Lib
-import Data.Sample.Types
+import Data.Stochastic
+import Data.Stochastic.Internal
+import Data.Stochastic.Types
 
 import qualified Data.Sequence as S
 
