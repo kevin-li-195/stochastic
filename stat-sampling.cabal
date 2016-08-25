@@ -146,3 +146,33 @@ test-suite coolCharts
   -- | Options to pass to ghc
   ghc-options:         -O2
                        -threaded
+
+test-suite swindler
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Swindler.hs
+  build-depends:       base, stat-sampling, containers, random
+  default-language:    Haskell2010
+  -- | Options to pass to ghc
+  ghc-options:         -O2
+                       -threaded
+
+test-suite montyHall
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             MontyHall.hs
+  build-depends:       base, stat-sampling, containers, random
+  default-language:    Haskell2010
+  -- | Options to pass to ghc
+  ghc-options:         -O2
+                       -threaded
+
+test-suite contrivedGambler
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             ContrivedGambler.hs
+  build-depends:       base, stat-sampling, random, Chart-cairo, Chart, containers, mtl
+  default-language:    Haskell2010
+  -- | Options to pass to ghc
+  ghc-options:         -O2
+                       -threaded
