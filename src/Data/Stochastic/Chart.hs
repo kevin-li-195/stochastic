@@ -1,5 +1,5 @@
 {-|
- Module         : Data.Sample.Chart
+ Module         : Data.Stochastic.Chart
  Description    : Quick and dirty plotting functions.
  License        : GPL-3
  Maintainer     : hackage@mail.kevinl.io
@@ -10,13 +10,13 @@
  running stochastic processes.
 
 -}
-module Data.Sample.Chart where
+module Data.Stochastic.Chart where
 
 import Control.Monad
 
 import Data.Foldable
 
-import Data.Sample.Types
+import Data.Stochastic.Types
 
 import qualified Data.Sequence as S
 

@@ -1,6 +1,6 @@
 {-|
- Module         : Data.Sample
- Description    : Types used for Sample.
+ Module         : Data.Stochastic
+ Description    : Main module containing functions for interacting with Samples and StochProcesses.
  License        : GPL-3
  Maintainer     : hackage@mail.kevinl.io
  Stability      : experimental
@@ -16,12 +16,12 @@
  Some examples for usage can be found here: <http://kevinl.io/posts/2016-08-17-sampling-monad.html>
 -}
 
-module Data.Sample where
+module Data.Stochastic where
 
 import Control.Monad.Trans
 import Control.Monad.Writer
 
-import Data.Sample.Types
+import Data.Stochastic.Types
 import qualified Data.Sequence as S
 
 import System.Random
@@ -61,7 +61,6 @@ runProcess_ ma g = fst $ runProcess ma g
 
 -- | Runs a 'StochProcess' computation a given number times
 -- and produces a 'Sequence' of 'Sequence's of Doubles.
--- | Get a certain number of samples from the 'Sample'
 runProcessN :: (Integral i) => i -> StochProcess -> StdGen -> S.Seq (S.Seq Double)
 runProcessN n pr gen = if n <= 0 then S.empty
                   else let (seq, gen') = runProcess pr gen

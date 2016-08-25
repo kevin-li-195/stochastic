@@ -3,14 +3,14 @@
 {-#LANGUAGE FlexibleInstances#-}
 
 {-|
- Module         : Data.Sample.Types
- Description    : Types used for Sample.
+ Module         : Data.Stochastic.Types
+ Description    : Types used for the stochastic package.
  License        : GPL-3
  Maintainer     : hackage@mail.kevinl.io
  Stability      : experimental
 
- This module contains the types
- for the stat-sampling package.
+ This module contains the types used
+ for the stochastic package.
 
  WARNING: In its current state, care should be
  taken when using discrete distributions
@@ -19,12 +19,12 @@
  if probabilities aren't normalized.
 -}
 
-module Data.Sample.Types where
+module Data.Stochastic.Types where
 
 import Control.Monad
 import Control.Monad.Writer
 
-import Data.Sample.Lib
+import Data.Stochastic.Internal
 
 import qualified Data.Sequence as S
 

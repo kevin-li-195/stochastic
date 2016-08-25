@@ -21,8 +21,6 @@ description:         This package allows the user to perform monadic composition
                      and return distributions over values). These functions
                      can then be sampled from to generate datapoints.
 
-                     and produce data.
-
 -- URL for the project homepage or repository.
 homepage:            http://kevinl.io/posts/2016-08-17-sampling-monad.html
 
@@ -56,10 +54,10 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Data.Sample
+  exposed-modules:     Data.Stochastic
                        -- Data.Sample.Chart
-                       Data.Sample.Types
-                       Data.Sample.Lib
+                       Data.Stochastic.Types
+                       Data.Stochastic.Internal
   
   -- Modules included in this library but not exported.
   -- other-modules:       

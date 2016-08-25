@@ -1,12 +1,12 @@
 {-|
- Module         : Data.Sample.Lib
- Description    : Utility functions for Sample types.
+ Module         : Data.Stochastic.Internal
+ Description    : Internal utility functions for Sample types.
  License        : GPL-3
  Maintainer     : hackage@mail.kevinl.io
  Stability      : experimental
 
 -}
-module Data.Sample.Lib where
+module Data.Stochastic.Internal where
 
 import System.Random
 
