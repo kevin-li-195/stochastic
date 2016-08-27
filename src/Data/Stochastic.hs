@@ -18,11 +18,15 @@
 
 module Data.Stochastic (
   -- * Constructing a Sample
-  certain
-, uniform
+  mkSample
+, certain
+, discreteUniform
 , discrete
 , bernoulli
 , normal
+, uniform
+, gamma
+, beta
   -- * Sampling from a Sample
 , sample
 , sample_
@@ -31,10 +35,14 @@ module Data.Stochastic (
 , sampleIO_
 , sampleION
   -- * Constructing a StochProcess
+, toProcess
 , certainProcess
-, uniformProcess
+, discreteUniformProcess
 , discreteProcess
 , normalProcess
+, uniformProcess
+, gammaProcess
+, betaProcess
 , composeProcess
   -- * Running a StochProcess
 , runProcess
@@ -126,32 +134,42 @@ runProcessN n pr gen = if n <= 0 then S.empty
 -- | 'StochProcess' sample for a normal distribution that records
 -- the value sampled from the normal distribution.
 normalProcess :: Mean -> StDev -> StochProcess 
-normalProcess mean std = do
-    sample <- lift $ normal mean std
-    tell $ S.singleton sample
-    return sample
+normalProcess mean std = toProcess $ normal mean std
 
--- | 'StochProcess' sample for a distribution over 'Double's that always
+-- | 'StochProcess' for a distribution over 'Double's that always
 -- returns the same value when sampled, and records that value.
 certainProcess :: Double -> StochProcess 
-certainProcess a = do
-    sample <- lift $ certain a
-    tell $ S.singleton sample
-    return sample
+certainProcess a = toProcess $ certain a
 
--- | 'StochProcess' sample for a discrete distribution over 'Double's
+-- | 'StochProcess' for a discrete distribution over 'Double's
 -- that records the value sampled from the normal distribution.
 discreteProcess :: [(Double, Double)] -> StochProcess 
-discreteProcess a = do
-    sample <- lift $ discrete a
-    tell $ S.singleton sample
-    return sample
+discreteProcess a = toProcess $ discrete a
 
--- | 'StochProcess' sample for a uniform distribution over 'Double's
--- that records the value sampled from it.
-uniformProcess :: [Double] -> StochProcess
-uniformProcess l = do
-    sample <- lift $ uniform l
+-- | 'StochProcess' for a discrete uniform distribution 
+-- over 'Double's that records the value sampled from it.
+discreteUniformProcess :: [Double] -> StochProcess
+discreteUniformProcess l = toProcess $ discreteUniform l
+
+-- | 'StochProcess' for a discrete uniform distribution 
+-- over 'Double's that records the value sampled from it.
+uniformProcess :: StochProcess
+uniformProcess = toProcess uniform
+
+-- | 'StochProcess' for a gamma distribution with
+-- provided shape and scale parameters.
+gammaProcess :: Double -> Double -> StochProcess
+gammaProcess a b = toProcess $ gamma a b
+
+-- | 'StochProcess' for a beta distribution.
+betaProcess :: Double -> Double -> StochProcess
+betaProcess a b = toProcess $ beta a b
+
+-- | Function to create a 'StochProcess' out of a provided
+-- 'Sample' over 'Double's.
+toProcess :: Sample StdGen Distribution Double -> StochProcess
+toProcess s = do
+    sample <- lift s
     tell $ S.singleton sample
     return sample
 
@@ -173,15 +191,38 @@ discrete :: RandomGen g => [(a, Double)] -> Sample g Distribution a
 discrete [] = error "do not construct empty discrete distributions"
 discrete l = mkSample $ Discrete l
 
--- | 'Sample' for a uniform distribution
+-- | 'Sample' for a discrete uniform distribution
 -- given a list of provided values.
-uniform :: (RandomGen g) => [a] -> Sample g Distribution a
-uniform l = mkSample $ Uniform l
+discreteUniform :: (RandomGen g) => [a] -> Sample g Distribution a
+discreteUniform l = mkSample $ DiscreteUniform l
+
+-- | 'Sample' for a continuous uniform distribution
+-- with support [0, 1].
+uniform :: (RandomGen g) => Sample g Distribution Double
+uniform = mkSample Uniform
 
 -- | 'Sample' for a distribution where we always sample
 -- the same value.
 certain :: (RandomGen g, Sampleable d) => a -> Sample g d a
 certain = mkSample . certainDist
+
+-- | 'Sample' for a gamma distribution given shape parameter
+-- and scale parameter.
+gamma :: RandomGen g
+      => Double 
+      -- ^ The shape parameter.
+      -> Double 
+      -- ^ The scale parameter.
+      -> Sample g Distribution Double
+gamma a b = if a <= 0 || b <= 0 
+            then error "cannot construct gamma dist with <=0 params"
+            else mkSample $ Gamma a b
+
+-- | 'Sample' for a beta distribution.
+beta :: RandomGen g => Double -> Double -> Sample g Distribution Double
+beta a b = if a <= 0 || b <= 0 
+            then error "cannot construct gamma dist with <=0 params"
+            else mkSample $ Beta a b
 
 -- | Get one sample of type a from the 'Sample' along with
 -- a new 'StdGen'.
@@ -225,7 +266,4 @@ sampleION i s = sampleN i s <$> newStdGen
 -- | Function to make a 'Sample' out of a provided
 -- 'Distribution'.
 mkSample :: (RandomGen g, Sampleable d) => d a -> Sample g d a
-mkSample d = Sample $ do
-                g <- get
-                put $ snd $ next g
-                return d
+mkSample d = Sample $ return d

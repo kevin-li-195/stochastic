@@ -8,7 +8,10 @@
 -}
 module Data.Stochastic.Internal (
   boxMuller
-, decentRandom
+, closedRnd
+, openRnd
+, closedOpenRnd
+, openClosedRnd
 ) where
 
 import System.Random
@@ -20,9 +23,27 @@ import Numeric.MathFunctions.Constants
 boxMuller :: (Floating a) => a -> a -> a
 boxMuller u1 u2 = cos (2 * pi * u2) * (sqrt $ (-2) * (log u1))
 
--- | Randoms that aren't too small or equal to 1.
-decentRandom :: (RandomGen g) => g -> (Double, g)
-decentRandom gen = let (sampled, newG) = randomR (0, 1.0) gen
-                   in if sampled <= m_epsilon || sampled == 1
-                      then decentRandom newG
-                      else (sampled, newG)
+-- | Randoms in the interval [0, 1]
+closedRnd :: (RandomGen g) => g -> (Double, g)
+closedRnd gen = randomR (0, 1.0) gen
+
+-- | Randoms in the interval (0, 1)
+openRnd :: (RandomGen g) => g -> (Double, g)
+openRnd gen = let (a, g) = closedRnd gen
+                   in if a == 0 || a == 1
+                      then openRnd g
+                      else (a, g)
+                      
+-- | Randoms in the interval [0, 1)
+closedOpenRnd :: (RandomGen g) => g -> (Double, g)
+closedOpenRnd gen = let (a, g) = closedRnd gen
+                    in if a == 1
+                       then closedOpenRnd g
+                       else (a, g)
+                      
+-- | Randoms in the interval (0, 1]
+openClosedRnd :: (RandomGen g) => g -> (Double, g)
+openClosedRnd gen = let (a, g) = closedRnd gen
+                   in if a == 0
+                      then openClosedRnd g
+                      else (a, g)

@@ -27,6 +27,7 @@ module Data.Stochastic.Types (
 , Sampler (..)
 , Mean (..)
 , StDev (..)
+, marsagliaTsang
 ) where
 
 import Control.Monad
@@ -47,8 +48,14 @@ data Distribution a where
     Normal :: Mean -> StDev -> Distribution Double
     Bernoulli :: Double -> Distribution Bool
     Discrete :: [(a, Double)] -> Distribution a
-    Uniform :: [a] -> Distribution a
+    DiscreteUniform :: [a] -> Distribution a
+    Uniform :: Distribution Double
     Certain :: a -> Distribution a
+    Gamma :: Double -> Double -> Distribution Double
+    -- ^ Gamma distribution, where the first parameter is the
+    -- shape parameter alpha, and the second parameter is the
+    -- scale parameter beta.
+    Beta :: Double -> Double -> Distribution Double
 
 -- | Class of types from which samples can be obtained.
 class Sampleable d where
@@ -66,15 +73,17 @@ instance Sampleable Distribution where
     sampleFrom da g
         = case da of
             Normal mean stdev 
-                -> let (a, g')   = decentRandom g 
-                       (a', g'') = decentRandom g'
+                -> let (a, g')   = closedRnd g 
+                       (a', g'') = closedRnd g'
                        s = (stdev * (boxMuller a a')) + mean
                    in (s, g')
             Bernoulli prob    
-                -> let (a, g') = decentRandom g
+                -> let (a, g') = closedRnd g
                    in (a <= prob, g')
+            Discrete []
+                -> error "cannot sample from empty discrete distribution"
             Discrete l        
-                -> let (a, g') = decentRandom g
+                -> let (a, g') = closedRnd g
                    in (scan a l, g')
                    where scan lim [] = 
                              if lim <= 0 then error $ "not normalized discrete dist"
@@ -82,14 +91,46 @@ instance Sampleable Distribution where
                          scan lim (x:xs) = 
                              if lim <= snd x then fst x 
                              else scan (lim - snd x) xs
-            Uniform l
-                -> let (a, g') = decentRandom g
+            DiscreteUniform []
+                -> error "cannot sample from empty discrete distribution"
+            DiscreteUniform l
+                -> let (a, g') = closedRnd g
                        prob = 1 / (fromIntegral $ length l)
                    in (l !! (floor $ a / prob), g')
+            Uniform
+                -> closedRnd g
+            Gamma alpha beta
+                -> if alpha <= 0 || beta <= 0 then error "alpha and beta parameter cannot be less than or equal to zero in beta distribution"
+                   else if alpha > 0 && alpha < 1 then
+                        let (a, g') = sampleFrom (Gamma (alpha + 1) beta) g
+                            (uni, g'') = openRnd g'
+                        in (a * (uni ** (1/alpha)), g'')
+                   else let d = alpha - (1/3)
+                            c = 1 / sqrt (9 * d)
+                            (m, g') =  marsagliaTsang d c g
+                        in (m * beta, g')
+            Beta alpha beta
+                -> let (x, g') = sampleFrom (Gamma alpha 1) g
+                       (y, g'') = sampleFrom (Gamma beta 1) g'
+                   in (x / (x + y), g'')
             Certain val       
-                -> (val, snd $ decentRandom g) 
+                -> (val, snd $ openRnd g) 
                 -- Seemingly unnecessary, but important to obey the monad laws to always produce the same RandomGen each time we sample.
     certainDist = Certain
+
+-- | Marsaglia and Tsang's rejection method
+-- for generating Gamma variates with parameters
+-- alpha and 1, where 1 is the scale parameter,
+-- given d and c.
+marsagliaTsang :: (RandomGen g) => Double -> Double -> g -> (Double, g)
+marsagliaTsang d c g =
+    let (norm, g') = sampleFrom (Normal 0 1) g
+        (uni, g'') = sampleFrom Uniform g'
+        v = (1 + (c * norm)) ** 3
+    in if norm > ((-1)/c) && 
+          log uni < ((norm ** 2)/2 + d - (d * v) + (d * log v))
+       then (d * v, g'')
+       else marsagliaTsang d c g''
 
 -- | Show instance for 'Distribution's.
 instance (Show a) => Show (Distribution a) where
@@ -97,7 +138,7 @@ instance (Show a) => Show (Distribution a) where
         Normal mean stdev -> "Normal " ++ show mean ++ " " ++ show stdev
         Bernoulli prob -> "Bernoulli " ++ show prob
         Discrete l -> "Discrete " ++ show l
-        Uniform l -> "Uniform " ++ show l       
+        DiscreteUniform l -> "DiscreteUniform " ++ show l       
         Certain val -> "Certain " ++ show val
 
 -- | 'Sample' monad containing a random number generator plus a type from which
