@@ -16,8 +16,6 @@ module Data.Stochastic.Internal (
 
 import System.Random
 
-import Numeric.MathFunctions.Constants
-
 -- | Function to convert values sampled from uniform distribution
 -- to a value sampled from a standard normal distribution.
 boxMuller :: (Floating a) => a -> a -> a
