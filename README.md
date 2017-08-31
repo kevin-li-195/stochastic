@@ -8,7 +8,7 @@ and construction of stochastic processes.
 
 Resulting computations can then be run to generate data.
 
-Blog [post](http://kevinl.io/posts/2016-08-17-sampling-monad.html) has some along with examples.
+Blog [post](http://kevinl.io/posts/2016-08-24-sampling-monad.html) has some along with examples.
 
 TODO
 -----
